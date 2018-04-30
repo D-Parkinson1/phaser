@@ -10,7 +10,6 @@ var CustomSet = require('../structs/Set');
 var EventEmitter = require('eventemitter3');
 var FileTypesManager = require('./FileTypesManager');
 var GetFastValue = require('../utils/object/GetFastValue');
-var ParseXMLBitmapFont = require('../gameobjects/bitmaptext/ParseXMLBitmapFont');
 var PluginManager = require('../boot/PluginManager');
 var XHRSettings = require('./XHRSettings');
 
@@ -111,7 +110,7 @@ var LoaderPlugin = new Class({
          * @default {}
          * @since 3.0.0
          */
-        this._multilist = {};
+        // this._multilist = {};
 
         //  Inject the available filetypes into the Loader
         FileTypesManager.install(this);
@@ -358,25 +357,36 @@ var LoaderPlugin = new Class({
      * @since 3.0.0
      *
      * @param {Phaser.Loader.File} file - [description]
-     *
-     * @return {Phaser.Loader.File} [description]
      */
     addFile: function (file)
     {
         if (!this.isReady())
         {
-            return -1;
+            return;
         }
 
-        //  Does the file already exist in the cache or texture manager?
-        if (!file.hasCacheConflict())
+        if (Array.isArray(file))
         {
+            for (var i = 0; i < file.length; i++)
+            {
+                var item = file[i];
+
+                //  Does the file already exist in the cache or texture manager?
+                if (!item.hasCacheConflict())
+                {
+                    item.path = this.path;
+
+                    this.list.set(item);
+                }
+            }
+        }
+        else if (!file.hasCacheConflict())
+        {
+            //  Does the file already exist in the cache or texture manager?
             file.path = this.path;
 
             this.list.set(file);
         }
-
-        return file;
     },
 
     /**
@@ -592,7 +602,7 @@ var LoaderPlugin = new Class({
 
             if (file.linkFile)
             {
-                this.queue.delete(file.linkFile);
+                file.linkFile.onFileFailed(file);
             }
 
             return this.removeFromQueue(file);
@@ -600,27 +610,9 @@ var LoaderPlugin = new Class({
 
         //  If we got here, then the file loaded
 
-        //  Special handling for multi-part files
+        this.storage.set(file);
 
-        if (file.linkFile)
-        {
-            if (file.state === CONST.FILE_COMPLETE && file.linkFile.state === CONST.FILE_COMPLETE)
-            {
-                //  Partner has loaded, so add them both to Storage
-
-                this.storage.set({ type: file.linkType, fileA: file, fileB: file.linkFile });
-
-                this.queue.delete(file.linkFile);
-
-                this.removeFromQueue(file);
-            }
-        }
-        else
-        {
-            this.storage.set(file);
-
-            this.removeFromQueue(file);
-        }
+        this.removeFromQueue(file);
     },
 
     /**
@@ -659,9 +651,6 @@ var LoaderPlugin = new Class({
         this.state = CONST.LOADER_COMPLETE;
 
         this.emit('complete', this, this.storage.size, this.failed.size);
-
-        //  Move to a User setting:
-        // this.removeAllListeners();
     },
 
     /**
@@ -677,10 +666,10 @@ var LoaderPlugin = new Class({
             return;
         }
 
+        /*
         //  The global Texture Manager
         var cache = this.scene.sys.cache;
         var textures = this.scene.sys.textures;
-        var anims = this.scene.sys.anims;
 
         //  Process multiatlas groups first
 
@@ -729,35 +718,24 @@ var LoaderPlugin = new Class({
                 }
             }
         }
+        */
 
         //  Process all of the files
 
-        //  Because AnimationJSON may require images to be loaded first, we process them last
-        var animJSON = [];
-
         this.storage.each(function (file)
         {
+            if (file.linkFile)
+            {
+                file.linkFile.addToCache();
+            }
+            else
+            {
+                file.addToCache();
+            }
+
+            /*
             switch (file.type)
             {
-                case 'animationJSON':
-                    animJSON.push(file);
-                    break;
-
-                case 'atlasjson':
-
-                    fileA = file.fileA;
-                    fileB = file.fileB;
-
-                    if (fileA.type === 'image')
-                    {
-                        textures.addAtlas(fileA.key, fileA.data, fileB.data);
-                    }
-                    else
-                    {
-                        textures.addAtlas(fileB.key, fileB.data, fileA.data);
-                    }
-                    break;
-
                 case 'dataimage':
 
                     fileA = file.fileA;
@@ -773,38 +751,6 @@ var LoaderPlugin = new Class({
                     }
                     break;
 
-                case 'unityatlas':
-
-                    fileA = file.fileA;
-                    fileB = file.fileB;
-
-                    if (fileA.type === 'image')
-                    {
-                        textures.addUnityAtlas(fileA.key, fileA.data, fileB.data);
-                    }
-                    else
-                    {
-                        textures.addUnityAtlas(fileB.key, fileB.data, fileA.data);
-                    }
-                    break;
-
-                case 'bitmapfont':
-
-                    fileA = file.fileA;
-                    fileB = file.fileB;
-
-                    if (fileA.type === 'image')
-                    {
-                        cache.bitmapFont.add(fileB.key, { data: ParseXMLBitmapFont(fileB.data), texture: fileA.key, frame: null });
-                        textures.addImage(fileA.key, fileA.data);
-                    }
-                    else
-                    {
-                        cache.bitmapFont.add(fileA.key, { data: ParseXMLBitmapFont(fileA.data), texture: fileB.key, frame: null });
-                        textures.addImage(fileB.key, fileB.data);
-                    }
-                    break;
-
                 case 'audioSprite':
 
                     var files = [ file.fileA, file.fileB ];
@@ -815,17 +761,15 @@ var LoaderPlugin = new Class({
                     });
 
                     break;
-
-                default:
-                    file.addToCache();
-
             }
+            */
+
         });
 
-        animJSON.forEach(function (file)
-        {
-            anims.fromJSON(file.data);
-        });
+        this.emit('processcomplete', this);
+
+        //  Called 'destroy' on each file in storage
+        this.storage.iterateLocal('destroy');
 
         this.storage.clear();
     },
@@ -901,14 +845,15 @@ var LoaderPlugin = new Class({
     },
 
     /**
-     * [description]
+     * Called by the Scene Manager if you specify a files payload for a pre-Scene Boot.
+     * Takes an array of file objects.
      *
      * @method Phaser.Loader.LoaderPlugin#loadArray
      * @since 3.0.0
      *
-     * @param {LoaderFileObject[]} files - [description]
+     * @param {LoaderFileObject[]} files - An array of files to load.
      *
-     * @return {boolean} [description]
+     * @return {boolean} `true` if any files were successfully added to the list, otherwise `false`.
      */
     loadArray: function (files)
     {
@@ -916,57 +861,14 @@ var LoaderPlugin = new Class({
         {
             for (var i = 0; i < files.length; i++)
             {
-                this.file(files[i]);
+                var file = files[i];
+
+                //  Calls file-type methods like `atlas` or `image`
+                this[file.type](file);
             }
         }
 
         return (this.list.size > 0);
-    },
-
-    /**
-     * [description]
-     *
-     * @method Phaser.Loader.LoaderPlugin#file
-     * @since 3.0.0
-     *
-     * @param {LoaderFileObject} file - [description]
-     *
-     * @return {Phaser.Loader.File} [description]
-     */
-    file: function (file)
-    {
-        var entry;
-        var key = file.key;
-
-        switch (file.type)
-        {
-            case 'spritesheet':
-                entry = this.spritesheet(key, file.url, file.config, file.xhrSettings);
-                break;
-
-            case 'atlas':
-                entry = this.atlas(key, file.textureURL, file.atlasURL, file.textureXhrSettings, file.atlasXhrSettings);
-                break;
-
-            case 'bitmapFont':
-                entry = this.bitmapFont(key, file.textureURL, file.xmlURL, file.textureXhrSettings, file.xmlXhrSettings);
-                break;
-
-            case 'multiatlas':
-                entry = this.multiatlas(key, file.textureURLs, file.atlasURLs, file.textureXhrSettings, file.atlasXhrSettings);
-                break;
-
-            case 'audioSprite':
-                entry = this.audioSprite(key, file.urls, file.json, file.config, file.audioXhrSettings, file.jsonXhrSettings);
-                break;
-
-            //  image, json, xml, binary, text, glsl, svg, obj
-            default:
-                entry = this[file.type](key, file.url, file.xhrSettings);
-                break;
-        }
-
-        return entry;
     },
 
     /**
