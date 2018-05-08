@@ -41,9 +41,11 @@ var TilemapJSONFile = new Class({
 
     addToCache: function ()
     {
-        this.cache.add(this.key, { format: TILEMAP_FORMATS.TILED_JSON, data: this.data });
+        var tiledata = { format: TILEMAP_FORMATS.TILED_JSON, data: this.data };
 
-        this.loader.emit('filecomplete', this.key, this);
+        this.cache.add(this.key, tiledata);
+
+        this.pendingDestroy(tiledata);
     }
 
 });
@@ -72,12 +74,12 @@ FileTypesManager.register('tilemapTiledJSON', function (key, url, xhrSettings)
         for (var i = 0; i < key.length; i++)
         {
             //  If it's an array it has to be an array of Objects, so we get everything out of the 'key' object
-            this.addFile(TilemapJSONFile(this, key[i]));
+            this.addFile(new TilemapJSONFile(this, key[i]));
         }
     }
     else
     {
-        this.addFile(TilemapJSONFile(this, key, url, xhrSettings));
+        this.addFile(new TilemapJSONFile(this, key, url, xhrSettings));
     }
 
     return this;

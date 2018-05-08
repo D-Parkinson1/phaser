@@ -39,8 +39,7 @@ var ValueToColor = require('../display/color/ValueToColor');
  *
  * @property {string} [baseURL] - [description]
  * @property {string} [path] - [description]
- * @property {boolean} [enableParallel=true] - [description]
- * @property {integer} [maxParallelDownloads=4] - [description]
+ * @property {integer} [maxParallelDownloads=32] - [description]
  * @property {(string|undefined)} [crossOrigin=undefined] - [description]
  * @property {string} [responseType] - [description]
  * @property {boolean} [async=true] - [description]
@@ -236,8 +235,7 @@ var Config = new Class({
         //  Loader Defaults
         this.loaderBaseURL = GetValue(config, 'loader.baseURL', '');
         this.loaderPath = GetValue(config, 'loader.path', '');
-        this.loaderEnableParallel = GetValue(config, 'loader.enableParallel', true);
-        this.loaderMaxParallelDownloads = GetValue(config, 'loader.maxParallelDownloads', 4);
+        this.loaderMaxParallelDownloads = GetValue(config, 'loader.maxParallelDownloads', 32);
         this.loaderCrossOrigin = GetValue(config, 'loader.crossOrigin', undefined);
         this.loaderResponseType = GetValue(config, 'loader.responseType', '');
         this.loaderAsync = GetValue(config, 'loader.async', true);

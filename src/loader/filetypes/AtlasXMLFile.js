@@ -9,52 +9,49 @@ var FileTypesManager = require('../FileTypesManager');
 var GetFastValue = require('../../utils/object/GetFastValue');
 var ImageFile = require('./ImageFile.js');
 var IsPlainObject = require('../../utils/object/IsPlainObject');
-var JSONFile = require('./JSONFile.js');
 var MultiFile = require('../MultiFile.js');
+var XMLFile = require('./XMLFile.js');
 
 /**
- * @typedef {object} Phaser.Loader.FileTypes.AtlasJSONFileConfig
+ * @typedef {object} Phaser.Loader.FileTypes.AtlasXMLFileConfig
  *
  * @property {string} key - The key of the file. Must be unique within both the Loader and the Texture Manager.
  * @property {string} [textureURL] - The absolute or relative URL to load the texture image file from.
  * @property {string} [textureExtension='png'] - The default file extension to use for the image texture if no url is provided.
  * @property {XHRSettingsObject} [textureXhrSettings] - Extra XHR Settings specifically for the texture image file.
  * @property {string} [normalMap] - The filename of an associated normal map. It uses the same path and url to load as the texture image.
- * @property {string} [atlasURL] - The absolute or relative URL to load the atlas json file from. Or a well formed JSON object to use instead.
- * @property {string} [atlasExtension='json'] - The default file extension to use for the atlas json if no url is provided.
- * @property {XHRSettingsObject} [atlasXhrSettings] - Extra XHR Settings specifically for the atlas json file.
+ * @property {string} [atlasURL] - The absolute or relative URL to load the atlas xml file from.
+ * @property {string} [atlasExtension='xml'] - The default file extension to use for the atlas xml if no url is provided.
+ * @property {XHRSettingsObject} [atlasXhrSettings] - Extra XHR Settings specifically for the atlas xml file.
  */
 
 /**
  * @classdesc
- * A single JSON based Texture Atlas File suitable for loading by the Loader.
+ * A single XML based Texture Atlas File suitable for loading by the Loader.
  *
- * These are created when you use the Phaser.Loader.LoaderPlugin#atlas method and are not typically created directly.
+ * These are created when you use the Phaser.Loader.LoaderPlugin#atlasXML method and are not typically created directly.
  * 
- * For documentation about what all the arguments and configuration options mean please see Phaser.Loader.LoaderPlugin#atlas.
- * 
- * https://www.codeandweb.com/texturepacker/tutorials/how-to-create-sprite-sheets-for-phaser3?source=photonstorm
+ * For documentation about what all the arguments and configuration options mean please see Phaser.Loader.LoaderPlugin#atlasXML.
  *
- * @class AtlasJSONFile
+ * @class AtlasXMLFile
  * @extends Phaser.Loader.MultiFile
  * @memberOf Phaser.Loader.FileTypes
  * @constructor
- * @since 3.0.0
  *
  * @param {Phaser.Loader.LoaderPlugin} loader - A reference to the Loader that is responsible for this file.
- * @param {(string|Phaser.Loader.FileTypes.AtlasJSONFileConfig)} key - The key to use for this file, or a file configuration object.
+ * @param {(string|Phaser.Loader.FileTypes.AtlasXMLFileConfig)} key - The key to use for this file, or a file configuration object.
  * @param {string|string[]} [textureURL] - The absolute or relative URL to load the texture image file from. If undefined or `null` it will be set to `<key>.png`, i.e. if `key` was "alien" then the URL will be "alien.png".
- * @param {string} [atlasURL] - The absolute or relative URL to load the texture atlas json data file from. If undefined or `null` it will be set to `<key>.json`, i.e. if `key` was "alien" then the URL will be "alien.json".
+ * @param {string} [atlasURL] - The absolute or relative URL to load the texture atlas xml data file from. If undefined or `null` it will be set to `<key>.xml`, i.e. if `key` was "alien" then the URL will be "alien.xml".
  * @param {XHRSettingsObject} [textureXhrSettings] - An XHR Settings configuration object for the atlas image file. Used in replacement of the Loaders default XHR Settings.
- * @param {XHRSettingsObject} [atlasXhrSettings] - An XHR Settings configuration object for the atlas json file. Used in replacement of the Loaders default XHR Settings.
+ * @param {XHRSettingsObject} [atlasXhrSettings] - An XHR Settings configuration object for the atlas xml file. Used in replacement of the Loaders default XHR Settings.
  */
-var AtlasJSONFile = new Class({
+var AtlasXMLFile = new Class({
 
     Extends: MultiFile,
 
     initialize:
 
-    function AtlasJSONFile (loader, key, textureURL, atlasURL, textureXhrSettings, atlasXhrSettings)
+    function AtlasXMLFile (loader, key, textureURL, atlasURL, textureXhrSettings, atlasXhrSettings)
     {
         var image;
         var data;
@@ -73,34 +70,34 @@ var AtlasJSONFile = new Class({
                 xhrSettings: GetFastValue(config, 'textureXhrSettings')
             });
 
-            data = new JSONFile(loader, {
+            data = new XMLFile(loader, {
                 key: key,
                 url: GetFastValue(config, 'atlasURL'),
-                extension: GetFastValue(config, 'atlasExtension', 'json'),
+                extension: GetFastValue(config, 'atlasExtension', 'xml'),
                 xhrSettings: GetFastValue(config, 'atlasXhrSettings')
             });
         }
         else
         {
             image = new ImageFile(loader, key, textureURL, textureXhrSettings);
-            data = new JSONFile(loader, key, atlasURL, atlasXhrSettings);
+            data = new XMLFile(loader, key, atlasURL, atlasXhrSettings);
         }
 
         if (image.linkFile)
         {
             //  Image has a normal map
-            MultiFile.call(this, loader, 'atlasjson', key, [ image, data, image.linkFile ]);
+            MultiFile.call(this, loader, 'atlasxml', key, [ image, data, image.linkFile ]);
         }
         else
         {
-            MultiFile.call(this, loader, 'atlasjson', key, [ image, data ]);
+            MultiFile.call(this, loader, 'atlasxml', key, [ image, data ]);
         }
     },
 
     /**
      * Adds this file to its target cache upon successful loading and processing.
      *
-     * @method Phaser.Loader.FileTypes.AtlasJSONFile#addToCache
+     * @method Phaser.Loader.FileTypes.AtlasXMLFile#addToCache
      * @since 3.7.0
      */
     addToCache: function ()
@@ -108,12 +105,12 @@ var AtlasJSONFile = new Class({
         if (this.isReadyToProcess())
         {
             var image = this.files[0];
-            var json = this.files[1];
+            var xml = this.files[1];
             var normalMap = (this.files[2]) ? this.files[2].data : null;
 
-            this.loader.textureManager.addAtlas(image.key, image.data, json.data, normalMap);
+            this.loader.textureManager.addAtlasXML(image.key, image.data, xml.data, normalMap);
 
-            json.addToCache();
+            xml.addToCache();
 
             this.complete = true;
         }
@@ -122,14 +119,14 @@ var AtlasJSONFile = new Class({
 });
 
 /**
- * Adds a JSON based Texture Atlas, or array of atlases, to the current load queue.
+ * Adds an XML based Texture Atlas, or array of atlases, to the current load queue.
  *
  * You can call this method from within your Scene's `preload`, along with any other files you wish to load:
 
  * ```javascript
  * function preload ()
  * {
- *     this.load.atlas('mainmenu', 'images/MainMenu.png', 'images/MainMenu.json');
+ *     this.load.atlasXML('mainmenu', 'images/MainMenu.png', 'images/MainMenu.xml');
  * }
  * ```
  *
@@ -144,10 +141,8 @@ var AtlasJSONFile = new Class({
  * If you call this from outside of `preload` then you are responsible for starting the Loader afterwards and monitoring
  * its events to know when it's safe to use the asset. Please see the Phaser.Loader.LoaderPlugin class for more details.
  *
- * Phaser expects the atlas data to be provided in a JSON file, using either the JSON Hash or JSON Array format.
- * These files are created by software such as Texture Packer, Shoebox and Adobe Flash / Animate.
- * If you are using Texture Packer and have enabled multi-atlas support, then please use the Phaser Multi Atlas loader
- * instead of this one.
+ * Phaser expects the atlas data to be provided in an XML file format.
+ * These files are created by software such as Shoebox and Adobe Flash / Animate.
  * 
  * Phaser can load all common image types: png, jpg, gif and any other format the browser can natively handle.
  *
@@ -159,21 +154,19 @@ var AtlasJSONFile = new Class({
  * Instead of passing arguments you can pass a configuration object, such as:
  * 
  * ```javascript
- * this.load.atlas({
+ * this.load.atlasXML({
  *     key: 'mainmenu',
  *     textureURL: 'images/MainMenu.png',
- *     atlasURL: 'images/MainMenu.json'
+ *     atlasURL: 'images/MainMenu.xml'
  * });
  * ```
  *
- * See the documentation for `Phaser.Loader.FileTypes.AtlasJSONFileConfig` for more details.
- *
- * Instead of passing a URL for the atlas JSON data you can also pass in a well formed JSON object instead.
+ * See the documentation for `Phaser.Loader.FileTypes.AtlasXMLFileConfig` for more details.
  *
  * Once the atlas has finished loading you can use frames from it as textures for a Game Object by referencing its key:
  * 
  * ```javascript
- * this.load.atlas('mainmenu', 'images/MainMenu.png', 'images/MainMenu.json');
+ * this.load.atlasXML('mainmenu', 'images/MainMenu.png', 'images/MainMenu.xml');
  * // and later in your game ...
  * this.add.image(x, y, 'mainmenu', 'background');
  * ```
@@ -194,39 +187,39 @@ var AtlasJSONFile = new Class({
  * then you can specify it by providing an array as the `url` where the second element is the normal map:
  * 
  * ```javascript
- * this.load.atlas('mainmenu', [ 'images/MainMenu.png', 'images/MainMenu-n.png' ], 'images/MainMenu.json');
+ * this.load.atlasXML('mainmenu', [ 'images/MainMenu.png', 'images/MainMenu-n.png' ], 'images/MainMenu.xml');
  * ```
  *
  * Or, if you are using a config object use the `normalMap` property:
  * 
  * ```javascript
- * this.load.atlas({
+ * this.load.atlasXML({
  *     key: 'mainmenu',
  *     textureURL: 'images/MainMenu.png',
  *     normalMap: 'images/MainMenu-n.png',
- *     atlasURL: 'images/MainMenu.json'
+ *     atlasURL: 'images/MainMenu.xml'
  * });
  * ```
  *
  * The normal map file is subject to the same conditions as the image file with regard to the path, baseURL, CORs and XHR Settings.
  * Normal maps are a WebGL only feature.
  *
- * Note: The ability to load this type of file will only be available if the Atlas JSON File type has been built into Phaser.
+ * Note: The ability to load this type of file will only be available if the Atlas XML File type has been built into Phaser.
  * It is available in the default build but can be excluded from custom builds.
  *
- * @method Phaser.Loader.LoaderPlugin#atlas
+ * @method Phaser.Loader.LoaderPlugin#atlasXML
  * @fires Phaser.Loader.LoaderPlugin#addFileEvent
- * @since 3.0.0
+ * @since 3.7.0
  *
- * @param {(string|Phaser.Loader.FileTypes.AtlasJSONFileConfig|Phaser.Loader.FileTypes.AtlasJSONFileConfig[])} key - The key to use for this file, or a file configuration object, or array of them.
+ * @param {(string|Phaser.Loader.FileTypes.AtlasXMLFileConfig|Phaser.Loader.FileTypes.AtlasXMLFileConfig[])} key - The key to use for this file, or a file configuration object, or array of them.
  * @param {string|string[]} [textureURL] - The absolute or relative URL to load the texture image file from. If undefined or `null` it will be set to `<key>.png`, i.e. if `key` was "alien" then the URL will be "alien.png".
- * @param {string} [atlasURL] - The absolute or relative URL to load the texture atlas json data file from. If undefined or `null` it will be set to `<key>.json`, i.e. if `key` was "alien" then the URL will be "alien.json".
+ * @param {string} [atlasURL] - The absolute or relative URL to load the texture atlas xml data file from. If undefined or `null` it will be set to `<key>.xml`, i.e. if `key` was "alien" then the URL will be "alien.xml".
  * @param {XHRSettingsObject} [textureXhrSettings] - An XHR Settings configuration object for the atlas image file. Used in replacement of the Loaders default XHR Settings.
- * @param {XHRSettingsObject} [atlasXhrSettings] - An XHR Settings configuration object for the atlas json file. Used in replacement of the Loaders default XHR Settings.
+ * @param {XHRSettingsObject} [atlasXhrSettings] - An XHR Settings configuration object for the atlas xml file. Used in replacement of the Loaders default XHR Settings.
  *
  * @return {Phaser.Loader.LoaderPlugin} The Loader instance.
  */
-FileTypesManager.register('atlas', function (key, textureURL, atlasURL, textureXhrSettings, atlasXhrSettings)
+FileTypesManager.register('atlasXML', function (key, textureURL, atlasURL, textureXhrSettings, atlasXhrSettings)
 {
     var multifile;
 
@@ -238,14 +231,14 @@ FileTypesManager.register('atlas', function (key, textureURL, atlasURL, textureX
     {
         for (var i = 0; i < key.length; i++)
         {
-            multifile = new AtlasJSONFile(this, key[i]);
+            multifile = new AtlasXMLFile(this, key[i]);
 
             this.addFile(multifile.files);
         }
     }
     else
     {
-        multifile = new AtlasJSONFile(this, key, textureURL, atlasURL, textureXhrSettings, atlasXhrSettings);
+        multifile = new AtlasXMLFile(this, key, textureURL, atlasURL, textureXhrSettings, atlasXhrSettings);
 
         this.addFile(multifile.files);
     }
@@ -253,4 +246,4 @@ FileTypesManager.register('atlas', function (key, textureURL, atlasURL, textureX
     return this;
 });
 
-module.exports = AtlasJSONFile;
+module.exports = AtlasXMLFile;
