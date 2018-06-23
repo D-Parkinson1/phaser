@@ -8,29 +8,6 @@
  * @namespace Phaser.Loader.FileTypes
  */
 
-/**
- * @typedef {object} XHRConfig
- *
- * @property {string} key - [description]
- * @property {string} texture - [description]
- * @property {string} [data] - [description]
- * @property {XHRConfig} [xhr] - [description]
- */
-
-/**
- * @typedef {object} FileTypeConfig
- *
- * @property {string} key - [description]
- * @property {string} texture - [description]
- * @property {string} [data] - [description]
- * @property {string} [url] - [description]
- * @property {string} [path] - [description]
- * @property {string} [extension] - [description]
- * @property {string} [responseType] - [description]
- * @property {object} [config] - [description]
- * @property {XHRConfig} [xhr] - [description]
- */
-
 module.exports = {
 
     AnimationJSONFile: require('./AnimationJSONFile'),
@@ -48,6 +25,7 @@ module.exports = {
     MultiAtlasFile: require('./MultiAtlasFile'),
     PackFile: require('./PackFile'),
     PluginFile: require('./PluginFile'),
+    ScenePluginFile: require('./ScenePluginFile'),
     ScriptFile: require('./ScriptFile'),
     SpriteSheetFile: require('./SpriteSheetFile'),
     SVGFile: require('./SVGFile'),

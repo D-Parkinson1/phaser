@@ -14,6 +14,11 @@ var TileSpriteRender = require('./TileSpriteRender');
 
 /**
  * @classdesc
+ * A TileSprite is a Sprite that has a repeating texture.
+ *
+ * The texture can be scrolled and scaled independently of the TileSprite itself. Textures will automatically wrap and
+ * are designed so that you can create game backdrops using seamless textures as a source.
+ *
  * [description]
  *
  * @class TileSprite
@@ -78,7 +83,7 @@ var TileSprite = new Class({
         GameObject.call(this, scene, 'TileSprite');
 
         /**
-         * [description]
+         * The horizontal scroll position of the Tile Sprite.
          *
          * @name Phaser.GameObjects.TileSprite#tilePositionX
          * @type {number}
@@ -88,7 +93,7 @@ var TileSprite = new Class({
         this.tilePositionX = 0;
 
         /**
-         * [description]
+         * The vertical scroll position of the Tile Sprite.
          *
          * @name Phaser.GameObjects.TileSprite#tilePositionY
          * @type {number}
@@ -98,7 +103,9 @@ var TileSprite = new Class({
         this.tilePositionY = 0;
 
         /**
-         * [description]
+         * Whether the Tile Sprite has changed in some way, requiring an re-render of its tile texture.
+         *
+         * Such changes include the texture frame and scroll position of the Tile Sprite.
          *
          * @name Phaser.GameObjects.TileSprite#dirty
          * @type {boolean}
@@ -108,7 +115,7 @@ var TileSprite = new Class({
         this.dirty = true;
 
         /**
-         * [description]
+         * The texture that the Tile Sprite is rendered to, which is then rendered to a Scene.
          *
          * @name Phaser.GameObjects.TileSprite#tileTexture
          * @type {?WebGLTexture}
@@ -118,7 +125,7 @@ var TileSprite = new Class({
         this.tileTexture = null;
 
         /**
-         * [description]
+         * The renderer in use by this Tile Sprite.
          *
          * @name Phaser.GameObjects.TileSprite#renderer
          * @type {(Phaser.Renderer.Canvas.CanvasRenderer|Phaser.Renderer.WebGL.WebGLRenderer)}
@@ -151,7 +158,7 @@ var TileSprite = new Class({
         this.potHeight = GetPowerOfTwo(this.frame.height);
 
         /**
-         * [description]
+         * The Canvas Pattern used to repeat the TileSprite's texture.
          *
          * @name Phaser.GameObjects.TileSprite#canvasPattern
          * @type {?CanvasPattern}
@@ -161,7 +168,7 @@ var TileSprite = new Class({
         this.canvasPattern = null;
 
         /**
-         * [description]
+         * The Canvas that the TileSprite's texture is rendered to.
          *
          * @name Phaser.GameObjects.TileSprite#canvasBuffer
          * @type {HTMLCanvasElement}
@@ -170,7 +177,7 @@ var TileSprite = new Class({
         this.canvasBuffer = CanvasPool.create2D(this, this.potWidth, this.potHeight);
 
         /**
-         * [description]
+         * The Canvas Context used to render the TileSprite's texture.
          *
          * @name Phaser.GameObjects.TileSprite#canvasBufferCtx
          * @type {CanvasRenderingContext2D}
@@ -222,7 +229,7 @@ var TileSprite = new Class({
     },
 
     /**
-     * [description]
+     * Render the tile texture if it is dirty, or if the frame has changed.
      *
      * @method Phaser.GameObjects.TileSprite#updateTileTexture
      * @since 3.0.0
@@ -269,14 +276,15 @@ var TileSprite = new Class({
     },
 
     /**
-     * [description]
+     * Internal destroy handler, called as part of the destroy process.
      *
-     * @method Phaser.GameObjects.TileSprite#destroy
-     * @since 3.0.0
+     * @method Phaser.GameObjects.TileSprite#preDestroy
+     * @protected
+     * @since 3.9.0
      */
-    destroy: function ()
+    preDestroy: function ()
     {
-        if (this.renderer.gl)
+        if (this.renderer && this.renderer.gl)
         {
             this.renderer.deleteTexture(this.tileTexture);
         }
@@ -288,7 +296,6 @@ var TileSprite = new Class({
         this.canvasBuffer = null;
 
         this.renderer = null;
-        this.visible = false;
     }
 
 });

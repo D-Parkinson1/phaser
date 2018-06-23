@@ -6,9 +6,10 @@
 
 var Class = require('../utils/Class');
 var CONST = require('./const');
+var DefaultPlugins = require('../plugins/DefaultPlugins');
 var GetPhysicsPlugins = require('./GetPhysicsPlugins');
 var GetScenePlugins = require('./GetScenePlugins');
-var Plugins = require('../plugins');
+var NOOP = require('../utils/NOOP');
 var Settings = require('./Settings');
 
 /**
@@ -111,7 +112,7 @@ var Systems = new Class({
          * [description]
          *
          * @name Phaser.Scenes.Systems#plugins
-         * @type {Phaser.Boot.PluginManager}
+         * @type {Phaser.Plugins.PluginManager}
          * @since 3.0.0
          */
         this.plugins;
@@ -207,6 +208,19 @@ var Systems = new Class({
          * @since 3.0.0
          */
         this.updateList;
+
+        /**
+         * The Scene Update function.
+         * 
+         * This starts out as NOOP during init, preload and create, and at the end of create
+         * it swaps to be whatever the Scene.update function is.
+         *
+         * @name Phaser.Scenes.Systems#sceneUpdate
+         * @type {function}
+         * @private
+         * @since 3.10.0
+         */
+        this.sceneUpdate = NOOP;
     },
 
     /**
@@ -224,6 +238,9 @@ var Systems = new Class({
     {
         this.settings.status = CONST.INIT;
 
+        //  This will get replaced by the SceneManager with the actual update function, if it exists, once create is over.
+        this.sceneUpdate = NOOP;
+
         this.game = game;
 
         this.canvas = game.canvas;
@@ -233,13 +250,7 @@ var Systems = new Class({
 
         this.plugins = pluginManager;
 
-        pluginManager.installGlobal(this, Plugins.Global);
-
-        pluginManager.installLocal(this, Plugins.CoreScene);
-
-        pluginManager.installLocal(this, GetScenePlugins(this));
-
-        pluginManager.installLocal(this, GetPhysicsPlugins(this));
+        pluginManager.addToScene(this, DefaultPlugins.Global, [ DefaultPlugins.CoreScene, GetScenePlugins(this), GetPhysicsPlugins(this) ]);
 
         this.events.emit('boot', this);
 
@@ -272,8 +283,8 @@ var Systems = new Class({
      * @method Phaser.Scenes.Systems#step
      * @since 3.0.0
      *
-     * @param {number} time - [description]
-     * @param {number} delta - [description]
+     * @param {number} time - The time value from the most recent Game step. Typically a high-resolution timer value, or Date.now().
+     * @param {number} delta - The delta value since the last frame. This is smoothed to avoid delta spikes by the TimeStep class.
      */
     step: function (time, delta)
     {
@@ -281,7 +292,7 @@ var Systems = new Class({
 
         this.events.emit('update', time, delta);
 
-        this.scene.update.call(this.scene, time, delta);
+        this.sceneUpdate.call(this.scene, time, delta);
 
         this.events.emit('postupdate', time, delta);
     },

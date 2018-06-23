@@ -13,10 +13,10 @@ var NOOP = require('../utils/NOOP');
 /**
  * @callback EachActiveSoundCallback
  *
- * @param {Phaser.Sound.BaseSoundManager} manager - [description]
- * @param {Phaser.Sound.BaseSound} sound - [description]
- * @param {number} index - [description]
- * @param {Phaser.Sound.BaseSound[]} sounds - [description]
+ * @param {Phaser.Sound.BaseSoundManager} manager - The SoundManager
+ * @param {Phaser.Sound.BaseSound} sound - The current active Sound
+ * @param {number} index - The index of the current active Sound
+ * @param {Phaser.Sound.BaseSound[]} sounds - All sounds
  */
 
 /**
@@ -116,24 +116,6 @@ var BaseSoundManager = new Class({
          */
         this.pauseOnBlur = true;
 
-        game.events.on('blur', function ()
-        {
-            if (this.pauseOnBlur)
-            {
-                this.onBlur();
-            }
-        }, this);
-
-        game.events.on('focus', function ()
-        {
-            if (this.pauseOnBlur)
-            {
-                this.onFocus();
-            }
-        }, this);
-
-        game.events.once('destroy', this.destroy, this);
-
         /**
          * Property that actually holds the value of global playback rate.
          *
@@ -179,6 +161,25 @@ var BaseSoundManager = new Class({
          * @since 3.0.0
          */
         this.unlocked = false;
+
+        game.events.on('blur', function ()
+        {
+            if (this.pauseOnBlur)
+            {
+                this.onBlur();
+            }
+        }, this);
+
+        game.events.on('focus', function ()
+        {
+            if (this.pauseOnBlur)
+            {
+                this.onFocus();
+            }
+        }, this);
+
+        game.events.on('prestep', this.update, this);
+        game.events.once('destroy', this.destroy, this);
     },
 
     /**
@@ -526,7 +527,7 @@ var BaseSoundManager = new Class({
      * @private
      * @since 3.0.0
      *
-     * @param {EachActiveSoundCallback} callback - Callback function. (sound: ISound, index: number, array: ISound[]) => void
+     * @param {EachActiveSoundCallback} callback - Callback function. (manager: Phaser.Sound.BaseSoundManager, sound: Phaser.Sound.BaseSound, index: number, sounds: Phaser.Manager.BaseSound[]) => void
      * @param {*} [scope] - Callback context.
      */
     forEachActiveSound: function (callback, scope)

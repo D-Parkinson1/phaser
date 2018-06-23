@@ -12,10 +12,10 @@ var RenderTexture = require('./RenderTexture');
 /**
  * @typedef {object} RenderTextureConfig
  *
- * @property {number} [x=0] - [description]
- * @property {number} [y=0] - [description]
- * @property {number} [width=32] - [description]
- * @property {number} [height=32] - [description]
+ * @property {number} [x=0] - The x coordinate of the RenderTexture's position.
+ * @property {number} [y=0] - The y coordinate of the RenderTexture's position.
+ * @property {number} [width=32] - The width of the RenderTexture.
+ * @property {number} [height=32] - The height of the RenderTexture.
  */
 
 /**
@@ -33,6 +33,8 @@ var RenderTexture = require('./RenderTexture');
  */
 GameObjectCreator.register('renderTexture', function (config, addToScene)
 {
+    if (config === undefined) { config = {}; }
+
     var x = GetAdvancedValue(config, 'x', 0);
     var y = GetAdvancedValue(config, 'y', 0);
     var width = GetAdvancedValue(config, 'width', 32);

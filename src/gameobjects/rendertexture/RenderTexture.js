@@ -89,7 +89,7 @@ var RenderTexture = new Class({
         this.renderer = scene.sys.game.renderer;
 
         /**
-         * [description]
+         * The tint of the Render Texture when rendered.
          *
          * @name Phaser.GameObjects.RenderTexture#globalTint
          * @type {number}
@@ -99,14 +99,44 @@ var RenderTexture = new Class({
         this.globalTint = 0xffffff;
 
         /**
-         * [description]
+         * The alpha of the Render Texture when rendered.
          *
          * @name Phaser.GameObjects.RenderTexture#globalAlpha
-         * @type {float}
+         * @type {number}
          * @default 1
          * @since 3.2.0
          */
         this.globalAlpha = 1;
+
+        /**
+         * The HTML Canvas Element that the Render Texture is drawing to.
+         * This is only set if Phaser is running with the Canvas Renderer.
+         *
+         * @name Phaser.GameObjects.RenderTexture#canvas
+         * @type {?HTMLCanvasElement}
+         * @since 3.2.0
+         */
+        this.canvas = null;
+
+        /**
+         * A reference to the Rendering Context belonging to the Canvas Element this Render Texture is drawing to.
+         * This is only set if Phaser is running with the Canvas Renderer.
+         *
+         * @name Phaser.GameObjects.RenderTexture#context
+         * @type {?CanvasRenderingContext2D}
+         * @since 3.2.0
+         */
+        this.context = null;
+
+        /**
+         * A reference to the GL Frame Buffer this Render Texture is drawing to.
+         * This is only set if Phaser is running with the WebGL Renderer.
+         *
+         * @name Phaser.GameObjects.RenderTexture#framebuffer
+         * @type {?WebGLFramebuffer}
+         * @since 3.2.0
+         */
+        this.framebuffer = null;
 
         if (this.renderer.type === CONST.WEBGL)
         {
@@ -136,31 +166,59 @@ var RenderTexture = new Class({
     },
 
     /**
-     * [description]
+     * Resizes the Render Texture to the new dimensions given.
      *
-     * @method Phaser.GameObjects.RenderTexture#destroy
-     * @since 3.2.0
+     * In WebGL it will destroy and then re-create the frame buffer being used by the Render Texture.
+     * In Canvas it will resize the underlying canvas element.
+     * Both approaches will erase everything currently drawn to the Render Texture.
+     *
+     * If the dimensions given are the same as those already being used, calling this method will do nothing.
+     *
+     * @method Phaser.GameObjects.RenderTexture#resize
+     * @since 3.10.0
+     *
+     * @param {number} width - The new width of the Render Texture.
+     * @param {number} [height] - The new height of the Render Texture. If not specified, will be set the same as the `width`.
+     *
+     * @return {this} This Render Texture.
      */
-    destroy: function ()
+    resize: function (width, height)
     {
-        GameObject.prototype.destroy.call(this);
+        if (height === undefined) { height = width; }
 
-        if (this.renderer.type === CONST.WEBGL)
+        if (width !== this.width || height !== this.height)
         {
-            this.renderer.deleteTexture(this.texture);
-            this.renderer.deleteFramebuffer(this.framebuffer);
+            if (this.canvas)
+            {
+                this.canvas.width = width;
+                this.canvas.height = height;
+            }
+            else
+            {
+                this.renderer.deleteTexture(this.texture);
+                this.renderer.deleteFramebuffer(this.framebuffer);
+
+                var gl = this.renderer.gl;
+
+                this.texture = this.renderer.createTexture2D(0, gl.NEAREST, gl.NEAREST, gl.CLAMP_TO_EDGE, gl.CLAMP_TO_EDGE, gl.RGBA, null, width, height, false);
+                this.framebuffer = this.renderer.createFramebuffer(width, height, this.texture, false);
+            }
+
+            this.setSize(width, height);
         }
+
+        return this;
     },
 
     /**
-     * [description]
+     * Set the tint to use when rendering this Render Texture.
      *
      * @method Phaser.GameObjects.RenderTexture#setGlobalTint
      * @since 3.2.0
      *
-     * @param {integer} tint [description]
+     * @param {integer} tint - The tint value.
      *
-     * @return {Phaser.GameObjects.RenderTexture} [description]
+     * @return {this} This Render Texture.
      */
     setGlobalTint: function (tint)
     {
@@ -170,20 +228,36 @@ var RenderTexture = new Class({
     },
 
     /**
-     * [description]
+     * Set the alpha to use when rendering this Render Texture.
      *
      * @method Phaser.GameObjects.RenderTexture#setGlobalAlpha
      * @since 3.2.0
      *
-     * @param {float} alpha [description]
+     * @param {number} alpha - The alpha value.
      *
-     * @return {Phaser.GameObjects.RenderTexture} [description]
+     * @return {this} This Render Texture.
      */
     setGlobalAlpha: function (alpha)
     {
         this.globalAlpha = alpha;
 
         return this;
+    },
+
+    /**
+     * Internal destroy handler, called as part of the destroy process.
+     *
+     * @method Phaser.GameObjects.RenderTexture#preDestroy
+     * @protected
+     * @since 3.9.0
+     */
+    preDestroy: function ()
+    {
+        if (this.renderer && this.renderer.gl)
+        {
+            this.renderer.deleteTexture(this.texture);
+            this.renderer.deleteFramebuffer(this.framebuffer);
+        }
     }
 
     /**

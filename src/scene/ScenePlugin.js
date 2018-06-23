@@ -8,7 +8,7 @@ var Clamp = require('../math/Clamp');
 var Class = require('../utils/Class');
 var CONST = require('./const');
 var GetFastValue = require('../utils/object/GetFastValue');
-var PluginManager = require('../boot/PluginManager');
+var PluginCache = require('../plugins/PluginCache');
 
 /**
  * @classdesc
@@ -249,8 +249,8 @@ var ScenePlugin = new Class({
      * @property {integer} [duration=1000] - The duration, in ms, for the transition to last.
      * @property {boolean} [sleep=false] - Will the Scene responsible for the transition be sent to sleep on completion (`true`), or stopped? (`false`)
      * @property {boolean} [allowInput=false] - Will the Scenes Input system be able to process events while it is transitioning in or out?
-     * @property {boolean} [moveAbove] - More the target Scene to be above this one before the transition starts.
-     * @property {boolean} [moveBelow] - More the target Scene to be below this one before the transition starts.
+     * @property {boolean} [moveAbove] - Move the target Scene to be above this one before the transition starts.
+     * @property {boolean} [moveBelow] - Move the target Scene to be below this one before the transition starts.
      * @property {function} [onUpdate] - This callback is invoked every frame for the duration of the transition.
      * @property {any} [onUpdateScope] - The context in which the callback is invoked.
      * @property {any} [data] - An object containing any data you wish to be passed to the target Scenes init / create methods.
@@ -493,6 +493,37 @@ var ScenePlugin = new Class({
             {
                 this.manager.start(key, data);
             }
+        }
+
+        return this;
+    },
+
+    /**
+     * Runs the given Scene, but does not change the state of this Scene.
+     * 
+     * If the given Scene is paused, it will resume it. If sleeping, it will wake it.
+     * If not running at all, it will be started.
+     *
+     * Use this if you wish to open a modal Scene by calling `pause` on the current
+     * Scene, then `run` on the modal Scene.
+     *
+     * @method Phaser.Scenes.ScenePlugin#run
+     * @since 3.10.0
+     *
+     * @param {string} key - The Scene to run.
+     * @param {object} [data] - A data object that will be passed to the Scene that is run _only if the Scene isn't asleep or paused_.
+     *
+     * @return {Phaser.Scenes.ScenePlugin} This ScenePlugin object.
+     */
+    run: function (key, data)
+    {
+        if (this.settings.status !== CONST.RUNNING)
+        {
+            this.manager.queueOp('run', key, data);
+        }
+        else
+        {
+            this.manager.run(key, data);
         }
 
         return this;
@@ -972,6 +1003,6 @@ var ScenePlugin = new Class({
 
 });
 
-PluginManager.register('ScenePlugin', ScenePlugin, 'scenePlugin');
+PluginCache.register('ScenePlugin', ScenePlugin, 'scenePlugin');
 
 module.exports = ScenePlugin;
